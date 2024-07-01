@@ -1,0 +1,338 @@
+from fastapi import FastAPI, HTTPException, Depends, status
+from pydantic import BaseModel
+from typing import Annotated
+import models
+from database import engine, SessionLocal
+from sqlalchemy.orm import session
+
+app = FastAPI()
+models.Base.metadata.create_all(bind=engine)
+
+
+class PaperBase(BaseModel):
+    file: str
+    year: str
+    subject:str
+    semester:str
+    paper_type:str
+
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
+# db_dependency = Annotated[session, Depends(get_db)]
+
+db_dependency = Annotated[session.Session, Depends(get_db)]
+
+
+
+@app.post("/posts/",status_code=status.HTTP_201_CREATED)
+def create_paper(post:PaperBase, db:db_dependency):
+    db_paper=models.Paper(**post.dict())
+    db.add(db_paper)
+    db.commit()
+
+@app.get("/result/",status_code=status.HTTP_302_FOUND)
+async def get_result(user_id:int, db:db_dependency):
+    user=db.query(models.User).filter(models.User.id==user_id).first()
+    if user is None:
+         raise HTTPException(status_code=404,detail="User not found")
+    return user
+
+
+# {
+#   "file": "2021questoin",s
+#   "year": "2021",
+#   "subject": "math",
+#   "semester": "second",
+#   "paper_type": "question"
+# }
+
+
+
+
+
+
+
+from __future__ import annotations
+
+from fastapi import FastAPI, HTTPException, Depends, status, Query
+from pydantic import BaseModel
+from typing import Annotated, Optional, List
+import models
+from database import engine, SessionLocal
+from sqlalchemy.orm import session, Session
+
+app = FastAPI()
+models.Base.metadata.create_all(bind=engine)
+
+
+class PaperBase(BaseModel):
+    file: str
+    year: str
+    subject: str
+    semester: str
+    paper_type: str
+
+
+class PaperResult(BaseModel):
+    file: Optional[str]
+    year: Optional[str]
+    subject: Optional[str]
+    semester: Optional[str]
+    paper_type: Optional[str]
+
+    class Config:
+        orm_mode = True
+
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
+# db_dependency = Annotated[session, Depends(get_db)]
+
+db_dependency = Annotated[session.Session, Depends(get_db)]
+
+
+@app.post("/post/", status_code=status.HTTP_201_CREATED)
+async def create_paper(post: PaperBase, db: db_dependency):
+    try:
+        db_paper = models.Paper(**post.dict())
+        db.add(db_paper)
+        db.commit()
+        db.refresh(db_paper)
+        return db_paper
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+
+@app.get("/items/", response_model=List[PaperResult])
+def read_items(paper_type: Optional[str] = None, year: Optional[int] = None, db: Session = Depends(get_db)):
+    query = db.query(models.Paper)
+
+    if paper_type:
+        if paper_type not in ["notes", "question", "answer"]:
+            raise HTTPException(status_code=400, detail="Invalid type")
+        query = query.filter(models.Paper.paper_type == paper_type)
+
+    if year:
+        query = query.filter(models.Paper.year == str(year))  # Ensure year is matched as a string if stored as such
+
+    return query.all()
+
+
+# {
+#   "file": "2021questoin",s
+#   "year": "2021",
+#   "subject": "math",
+#   "semester": "second",
+#   "paper_type": "question"
+# }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+from __future__ import annotations
+
+from venv import logger
+
+from fastapi import FastAPI, HTTPException, Depends, status, Query
+from pydantic import BaseModel
+from typing import Annotated, Optional, List
+
+from sqlalchemy import text
+
+import models
+from database import engine, SessionLocal
+from sqlalchemy.orm import session, Session
+
+app = FastAPI()
+models.Base.metadata.create_all(bind=engine)
+
+
+class PaperBase(BaseModel):
+    file: str
+    year: str
+    subject: str
+    semester: str
+    paper_type: str
+
+    # class Config:
+    #     orm_mode = True
+
+
+class PaperResult(BaseModel):
+    file: Optional[str]
+    year: Optional[str]
+    subject: Optional[str]
+    semester: Optional[str]
+    paper_type: Optional[str]
+
+    # class Config:
+    #     orm_mode = True
+
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
+db_dependency = Annotated[session, Depends(get_db)]
+
+
+# db_dependency = Annotated[session.Session, Depends(get_db)]
+
+
+@app.post("/post/", status_code=status.HTTP_201_CREATED)
+async def create_paper(post: PaperBase, db: db_dependency):
+    try:
+        db_paper = models.Paper(**post.dict())
+        db.add(db_paper)
+        db.commit()
+        db.refresh(db_paper)
+        return db_paper
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+#
+# @app.get("/get-by-subject/", response_model=List[PaperBase])
+# def get_item(subject: str, db: Session = Depends(get_db)):
+#     items = db.query(models.Paper).filter(models.Paper.subject == subject).all()
+#     if not items:
+#         raise HTTPException(status_code=404, detail="Data not found")
+#     return items
+
+# {
+#   "file": "2021questoin",s
+#   "year": "2021",
+#   "subject": "math",
+#   "semester": "second",
+#   "paper_type": "question"
+# }
+
+
+class PaperResult(PaperBase):
+    content: Optional[str]  # Added field to store retrieved content (optional)
+
+
+
+
+@app.get("/items/", response_model=List[PaperResult])
+async def read_items(
+    semester: str = Query(..., description="Semester (e.g., 'first')"),
+    paper_type: Optional[str] = None,
+    year: Optional[int] = None,
+    db: Session = db_dependency,
+):
+
+
+    query = text(
+        """
+        SELECT file, year, subject, semester, paper_type
+        FROM papers
+        WHERE semester = :semester
+        """
+    )
+    params = {"semester": semester}
+
+
+    if paper_type:
+        if paper_type not in ["question", "note", "answer"]:
+            raise HTTPException(status_code=400, detail="Invalid paper type")
+        query = query.append("AND paper_type = :paper_type")
+        params["paper_type"] = paper_type
+
+    if year:
+        query = query.append("AND year = :year")
+        params["year"] = str(year)  # Ensure year is matched as a string
+
+    results = db.execute(query, params).all()
+
+    return [PaperResult(**row) for row in results]
+
+
+
+
+
+
+
+
+
+
+
+    @app.get("/posts/{paper_id}",status_code=status.HTTP_200_OK)
+async def read_post(paper_id:int,db:db_dependency):
+    post=db.query(models.Paper).filter(models.Paper.id==paper_id).first()
+    if post is None:
+        raise HTTPException(status_code=404,detail="Post not found")
+    return post
+
+@app.get ("/get-by-subject")
+def get_item(subject: str):
+    for item_id in test:
+        if test[item_id] ["subject"]== subject:
+            return test[item_id]
+        return {"Data": "Not found"}
+
+
+@app.get("/papers", response_class=HTMLResponse)
+async def get_papers(semester: str = None, paper_type: str = None, db: Session = Depends(get_db)):
+    query = db.query(models.Subject).all()
+    return templates.TemplateResponse("index.html", {"request": {}, "subjects": query})
+
+
+
+
+
+@app.post("/search", response_class=HTMLResponse)
+def search(request: Request, semester: str = Form(None), paper_type: str = Form(None), db: Session = Depends(get_db)):
+    print(f"Received semester: {semester}, paper_type: {paper_type}")  # Debug: check form input
+
+    query = db.query(models.Paper)
+
+    if semester:
+        print(f"Filtering by semester: {semester}")
+        query = query.filter(models.Paper.semester == semester)
+    if paper_type:
+        print(f"Filtering by paper type: {paper_type}")
+        query = query.filter(models.Paper.paper_type == paper_type)
+
+    papers = query.all()
+    print(f"Found papers: {papers}")  # Debug: check query results
+
+    if not papers:
+        return templates.TemplateResponse("index.html",
+                                          {"request": request, "papers": [], "message": "No results found"})
+
+    return templates.TemplateResponse("index.html", {"request": request, "papers": papers})
+
