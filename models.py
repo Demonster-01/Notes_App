@@ -11,6 +11,8 @@ class UserRegister(Base):
     Email = Column(String(20), unique=True)
     password = Column(String(30))
     confirm_password = Column(String(30))
+    role = Column(Enum("Admin", "Client", "Manager", name="user_roles"), default="Client")
+
 
     # Relationships
     questions = relationship("AskQue", back_populates="user")
@@ -49,7 +51,7 @@ class Paper(Base):
     subject = Column(String(30))
     chapter= Column(String(30),nullable=True)
     semester = Column(String(30),index=True)
-    paper_type = Column(Enum("Syllabus", "Notes","Question","Answer"),index=True)
+    paper_type = Column(Enum("Syllabus", "Notes","Question","Answer", name="Paper-type"),index=True)
 
 
 
