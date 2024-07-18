@@ -12,10 +12,26 @@
 
 
 
-# Exclude junkfolder
-!uploads
+# Exclude junkfolder mine
+!extra/
+extra/
 
+# Ignore virtual environment
+.venv/
 
+# Ignore PyCharm and JetBrains IDE specific files
+.idea/
+
+# Ignore Python bytecode
+*.pyc
+__pycache__/
+
+# Ignore other typical unwanted files
+*.log
+*.tmp
+*.bak
+
+#????
 
 # User-specific stuff
 .idea/**/workspace.xml
