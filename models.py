@@ -11,7 +11,7 @@ class UserRegister(Base):
     Email = Column(String(20), unique=True)
     password = Column(String(30))
     confirm_password = Column(String(30))
-    role = Column(Enum("Admin", "Client", "Manager", name="user_roles"), default="Client")
+    role = Column(Enum("admin", "Client", "Manager", name="user_roles"), default="Client")
 
 
     # Relationships
