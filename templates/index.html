@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Search Results</title>
+</head>
+<body>
+    <h1>Search Results</h1>
+    {% if papers %}
+        <ul>
+            {% for paper in papers %}
+                <li>{{ paper.file }} - {{ paper.year }} - {{ paper.subject }} - {{ paper.semester }} - {{ paper.paper_type }}</li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No results found</p>
+    {% endif %}
+    <a href="/">Back to search</a>
+</body>
+</html>
