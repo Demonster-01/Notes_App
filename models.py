@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Enum
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Enum, ARRAY
 from sqlalchemy.orm import relationship
 from database import Base
 
@@ -10,8 +10,7 @@ class UserRegister(Base):
     username = Column(String(10), unique=True)
     Email = Column(String(20), unique=True)
     password = Column(String(30))
-    confirm_password = Column(String(30))
-    role = Column(Enum("admin", "Client", "Manager", name="user_roles"), default="Client")
+    role = Column(Enum("admin", "Client", "Manager", name="user_roles"), default="admin")
 
 
     # Relationships
@@ -46,11 +45,12 @@ class Paper(Base):
     __tablename__ = 'papers'
 
     id = Column(Integer, primary_key=True, index=True)
-    file = Column(String(30))
+    file =  Column(String(30))
     year = Column(Integer, index=True,nullable=True)
     subject = Column(String(30))
     chapter= Column(String(30),nullable=True)
     semester = Column(String(30),index=True)
+    # file= Column(String(30))
     paper_type = Column(Enum("Syllabus", "Notes","Question","Answer", name="Paper-type"),index=True)
 
 
