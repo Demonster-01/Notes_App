@@ -12,7 +12,7 @@ class Image(BaseModel):
     class Config:
         orm_mode = True
 
-
+#####----- schema for resources like notes, question..
 class PaperBase(BaseModel):
     year: Annotated[Optional[int], Form()] = None
     subject: Annotated[Optional[str], Form()] = None
@@ -32,11 +32,11 @@ class PaperUpdate(BaseModel):
     chapter: Optional[str] = None
 
 
-
+#####----- schema for Users like login and token
 class Register(BaseModel):
     FullName: str = Form(...)
     username: str = Form(...)
-    Email: EmailStr = Form(...)
+    Email: str = Form(...)
     password: str = Form(...)
     confirm_password: str = Form(...)
     image: Image | None = None
@@ -51,10 +51,9 @@ class UserRole(str, Enum):
     Manager = "Manager"
 
 class UserInDB(BaseModel):
-    id: int
     FullName: str
     username: str
-    Email: str
+    Email: EmailStr
     password: str
     role: UserRole
 
@@ -62,7 +61,7 @@ class UserInDB(BaseModel):
 class UserOut(BaseModel):
     id: int
     FullName: str
-    username: str
+    Username: str
     Email: str
 
     class Config:
@@ -86,19 +85,20 @@ class LoginOut(BaseModel):
 
 class UserProfileUpdate(BaseModel):
     FullName: Optional[str] = None
-    username: Optional[str] = None
+    Username: Optional[str] = None
     Email: Optional[EmailStr] = None
-    password: Optional[str] = None
-    confirm_password: Optional[str] = None
 
     class Config:
         orm_mode = True
 
+
+#####----- schema for Faculty
 class FacultyBase(BaseModel):
     Name:str
+    Acronym:str
 
 
-# For JWT
+#####----- schema for JWT
 
 
 class Token(BaseModel):
@@ -115,5 +115,23 @@ class User(BaseModel):
     full_name: str | None = None
 
 
-class UserInDB(User):
-    hashed_password: str
+#####----- schema for subject
+class SubjectBase(BaseModel):
+    id: int
+    name: str
+    faculty_id:int
+    subject_code:str
+
+class FacultySchema(BaseModel):
+    id: int
+    Fullname: str
+    Acronym: str
+    subjects: List[SubjectBase] = []
+
+class SubjectUpdate(BaseModel):
+    name: Optional[str] = None
+    faculty_id: Optional[int] = None
+    subject_code: Optional[str] = None
+
+    class Config:
+        orm_mode = True

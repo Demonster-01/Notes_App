@@ -15,6 +15,7 @@
 # Exclude junkfolder mine
 !extra/
 extra/
+uploads/
 
 # Ignore virtual environment
 .venv/
