@@ -1,4 +1,6 @@
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Enum, ARRAY
+from datetime import datetime
+
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Enum, DateTime
 from sqlalchemy.orm import relationship
 from database import Base
 
@@ -7,10 +9,10 @@ class UserRegister(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     FullName = Column(String(30))
-    username = Column(String(10), unique=True)
+    Username = Column(String(10), unique=True)
     Email = Column(String(20), unique=True)
     password = Column(String(30))
-    role = Column(Enum("admin", "Client", "Manager", name="user_roles"), default="admin")
+    role = Column(Enum("admin", "Client", "Manager", name="user_roles"), default="Client")
 
 
     # Relationships
@@ -21,7 +23,8 @@ class Faculty(Base):
     __tablename__ = 'faculties'
 
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String(30))
+    Fullname = Column(String(30))
+    Acronym = Column(String(30))
 
     subjects = relationship("Subject", back_populates="faculty")
 
@@ -32,14 +35,20 @@ class Syllabus(Base):
     year_range = Column(String(10))
     file = Column(String(30))
 
+
+
 class Subject(Base):
     __tablename__ = 'subjects'
 
     id = Column(Integer, primary_key=True, index=True)
-    subject = Column(String(20), index=True)
+    name = Column(String(20), index=True)
+    subject_code= Column(String(20),unique=True, index=True)
     faculty_id = Column(Integer, ForeignKey('faculties.id'))
 
     faculty = relationship("Faculty", back_populates="subjects")
+    papers = relationship("Paper", back_populates="subject")
+
+
 
 class Paper(Base):
     __tablename__ = 'papers'
@@ -50,8 +59,11 @@ class Paper(Base):
     subject = Column(String(30))
     chapter= Column(String(30),nullable=True)
     semester = Column(String(30),index=True)
+    subject_id = Column(Integer, ForeignKey('subjects.id'))
     # file= Column(String(30))
     paper_type = Column(Enum("Syllabus", "Notes","Question","Answer", name="Paper-type"),index=True)
+
+    subject = relationship("Subject", back_populates="papers")
 
 
 
@@ -66,6 +78,7 @@ class AskQue(Base):
     chapter = Column(String(30), nullable=True)
     semester = Column(String(30), index=True)
     user_id = Column(Integer, ForeignKey('user.id'))
+    timestamp = Column(DateTime, default=datetime.utcnow)
 
     user = relationship("UserRegister", back_populates="questions")
     answers = relationship("AnswerPost", back_populates="question")
@@ -78,6 +91,7 @@ class AnswerPost(Base):
     ans_img = Column(String(30), nullable=True)
     question_id = Column(Integer, ForeignKey('ask_que.id'))
     user_id = Column(Integer, ForeignKey('user.id'))
+    timestamp = Column(DateTime, default=datetime.utcnow)
 
     question = relationship("AskQue", back_populates="answers")
     user = relationship("UserRegister", back_populates="answers")
