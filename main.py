@@ -17,7 +17,7 @@ from sqlalchemy.orm import Session
 import models
 from dependencies import admin_required
 from routers import resources, users, qna
-from admin import admin, faculty
+from admin import admin
 from schemas import User
 
 description = """
@@ -82,7 +82,7 @@ db_dependency = Annotated[Session, Depends(get_db)]
 app.include_router(users.router)
 app.include_router(qna.router)
 app.include_router(resources.router)
-app.include_router(faculty.router)
+# app.include_router(faculty.router)
 app.include_router(
     admin.router,
     prefix="/admin",

@@ -1,0 +1,33 @@
+<!-- templates/upload_form.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Paper</title>
+</head>
+<body>
+    <h1>Upload Paper</h1>
+    <form action="/post/" method="post" enctype="multipart/form-data">
+        <label for="year">Year:</label>
+        <input type="text" id="year" name="year" required><br><br>
+
+        <label for="subject">Subject:</label>
+        <input type="text" id="subject" name="subject"><br><br>
+
+        <label for="semester">Semester:</label>
+        <input type="text" id="semester" name="semester"><br><br>
+
+        <label for="paper_type">Paper Type:</label>
+        <input type="text" id="paper_type" name="paper_type"><br><br>
+
+        <label for="chapter">Chapter:</label>
+        <input type="text" id="chapter" name="chapter"><br><br>
+
+        <label for="images">Upload Images:</label>
+        <input type="file" id="images" name="images" multiple><br><br>
+
+        <input type="submit" value="Upload Paper">
+    </form>
+</body>
+</html>

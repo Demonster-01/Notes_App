@@ -23,11 +23,11 @@ router = APIRouter()
 @router.get("/search/", response_model=List[PaperBase], status_code=status.HTTP_200_OK, tags=["resources"])
 async def search(
 
-    semester: Optional[str] = Form(None),
-    paper_type: Optional[str] = Form(None),
-    year: Optional[int] = Form(None),
-    subject: Optional[str] = Form(None),
-    chapter: Optional[str] = Form(None),
+    semester: Optional[str] = Query(None, description="Semester"),
+    paper_type: Optional[str] = Query(None, description="Type of paper"),
+    year: Optional[int] = Query(None, description="Year"),
+    subject: Optional[str] = Query(None, description="Subject"),
+    chapter: Optional[str] = Query(None, description="Chapter"),
     db: Session = Depends(get_db)
 ):
     query = db.query(Paper)
@@ -55,34 +55,3 @@ async def search(
 
 
 
-
-@router.put("/papers/{paper_id}", response_model=PaperBase, status_code=status.HTTP_200_OK, tags=["resources"])
-async def update_paper(
-    paper_id: int = Path(..., description="The ID of the paper to update"),
-    semester: Optional[str] = Form(None),
-    paper_type: Optional[str] = Form(None),
-    year: Optional[int] = Form(None),
-    subject: Optional[str] = Form(None),
-    chapter: Optional[str] = Form(None),
-    db: Session = Depends(get_db)
-):
-    try:
-        paper = db.query(Paper).filter(Paper.id == paper_id).one()
-    except NoResultFound:
-        raise HTTPException(status_code=404, detail="Paper not found")
-
-    if semester is not None:
-        paper.semester = semester
-    if paper_type is not None:
-        paper.paper_type = paper_type
-    if year is not None:
-        paper.year = year
-    if subject is not None:
-        paper.subject = subject
-    if chapter is not None:
-        paper.chapter = chapter
-
-    db.commit()
-    db.refresh(paper)
-
-    return paper
