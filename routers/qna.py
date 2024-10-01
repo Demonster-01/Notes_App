@@ -1,9 +1,12 @@
+from datetime import datetime, timezone
+
 from fastapi import APIRouter, Depends, HTTPException, Request, Form, status
 from sqlalchemy.orm import Session
 from typing import Optional, List
 import models
 from database import get_db
-from schemas import PaperBase
+from dependencies import get_current_user
+from schemas import PaperBase, User
 
 router = APIRouter()
 
@@ -16,8 +19,11 @@ async def ask_question(
                        subject: str = Form(...),
                        chapter: str = Form(None),
                        semester: str = Form(...),
-                       user_id: int = Form(...),
-                       db: Session = Depends(get_db)):
+                       db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)):
+    if not current_user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
+
     new_question = models.AskQue(
         question=question,
         question_img=question_img,
@@ -25,7 +31,8 @@ async def ask_question(
         subject=subject,
         chapter=chapter,
         semester=semester,
-        user_id=user_id
+        user_id=current_user.id,  # Use the logged-in user's ID
+        timestamp=datetime.now(timezone.utc)  # Add the current timestamp
     )
     db.add(new_question)
     db.commit()
