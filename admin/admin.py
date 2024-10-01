@@ -1,13 +1,7 @@
 from datetime import timedelta
-<<<<<<< HEAD
 import aiofiles
 import logging
 from fastapi import APIRouter, Depends, HTTPException, Form, UploadFile, File, Query, Path, status
-=======
-
-import jwt
-from fastapi import APIRouter, Depends, HTTPException, Form, status, UploadFile, File, Query, Path
->>>>>>> origin/try
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import Session
@@ -17,20 +11,9 @@ from typing import Optional, List
 
 from Auth import authenticate_user, ACCESS_TOKEN_EXPIRE_MINUTES, create_access_token
 from database import get_db
-<<<<<<< HEAD
 from models import Paper, Faculty, UserRegister, Subject
 from schemas import PaperBase, LoginIn, LoginOut, TokenData, Token, FacultyBase, SubjectBase, FacultySchema, SubjectUpdate
 from dependencies import admin_required
-=======
-
-import models
-from typing import Optional, List, Annotated
-
-from dependencies import admin_required
-from schemas import PaperBase, LoginIn, LoginOut, TokenData, Token, FacultyBase, SubjectBase, FacultySchema, \
-    SubjectUpdate
-from models import Paper, Faculty, UserRegister,Subject
->>>>>>> origin/try
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -42,8 +25,6 @@ def get_paper_by_id(db: Session, paper_id: int):
     if not paper:
         raise HTTPException(status_code=404, detail="Paper not found")
     return paper
-########----manage resources
-
 
 
 ########----manage resources
@@ -57,11 +38,7 @@ async def create_paper(
         chapter: str = Form(...),
         images: Optional[List[UploadFile]] = File(None),
         db: Session = Depends(get_db),
-<<<<<<< HEAD
         current_user: UserRegister = Depends(admin_required)
-=======
-        current_user: models.UserRegister = Depends(admin_required)
->>>>>>> origin/try
 ):
     logger.info(f"User {current_user.username} is creating a paper for {subject}, semester {semester}")
     try:
@@ -92,11 +69,6 @@ async def create_paper(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-
-<<<<<<< HEAD
-=======
-
->>>>>>> origin/try
 @router.put("/update-resources/{paper_id}", response_model=PaperBase, status_code=status.HTTP_200_OK, tags=["admins"])
 async def update_paper(
     paper_id: int = Path(..., description="The ID of the paper to update"),
@@ -106,18 +78,9 @@ async def update_paper(
     subject: Optional[str] = Form(None),
     chapter: Optional[str] = Form(None),
     db: Session = Depends(get_db),
-<<<<<<< HEAD
     current_user: UserRegister = Depends(admin_required),
 ):
     paper = get_paper_by_id(db, paper_id)
-=======
-    current_user: models.UserRegister = Depends(admin_required),
-):
-    try:
-        paper = db.query(Paper).filter(Paper.id == paper_id).one()
-    except NoResultFound:
-        raise HTTPException(status_code=404, detail="Paper not found")
->>>>>>> origin/try
 
     if semester is not None:
         paper.semester = semester
@@ -135,7 +98,7 @@ async def update_paper(
 
     return paper
 
-<<<<<<< HEAD
+
 @router.delete("/delete-resources/{paper_id}/", tags=["admins"], status_code=status.HTTP_200_OK)
 async def delete_resource(
         paper_id: int,
@@ -143,27 +106,12 @@ async def delete_resource(
         db: Session = Depends(get_db)
 ):
     resource = get_paper_by_id(db, paper_id)
-=======
-@router.delete("/delete-resources/{papers_id}/", tags=["admins"], status_code=status.HTTP_200_OK)
-async def delete_resource(
-        papers_id: int,
-        current_user: models.UserRegister = Depends(admin_required),
-        db: Session = Depends(get_db)
-):
-    resource = db.query(models.Paper).filter(Paper.id == papers_id).first()
-
-    if resource is None:
-        raise HTTPException(status_code=404, detail="Resources not found")
->>>>>>> origin/try
 
     db.delete(resource)
     db.commit()
 
-<<<<<<< HEAD
     return {"detail": "Paper deleted successfully"}
-=======
-    return resource,("delete file")
->>>>>>> origin/try
+
 
 @router.get("/papers/", response_model=List[PaperBase], status_code=status.HTTP_200_OK, tags=["admins"])
 async def get_papers(
@@ -180,30 +128,26 @@ async def get_papers(
         query = query.filter(Paper.semester == semester)
     if paper_type:
         query = query.filter(Paper.paper_type == paper_type)
-    if semester:
+    if year:
         query = query.filter(Paper.year == year)
-    if paper_type:
+    if subject:
         query = query.filter(Paper.subject == subject)
     if chapter:
         query = query.filter(Paper.chapter == chapter)
 
     papers = query.all()
     if not papers:
-        raise HTTPException(status_code=404, detail="Data not found")
+        raise HTTPException(status_code=404, detail="No papers found")
 
     return papers
+
 
 ########---- login
 
 @router.post("/token", response_model=LoginOut, tags=["admins"])
+@limiter.limit("5/minute")
 async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
-<<<<<<< HEAD
     user = db.query(UserRegister).filter(UserRegister.username == form_data.username).first()
-    print("models.UserRegister.username", UserRegister.username, "form_data.username", form_data.username)
-=======
-    user = db.query(models.UserRegister).filter(models.UserRegister.username == form_data.username).first()
-    print("models.UserRegister.username", models.UserRegister.username, "form_data.username", form_data.username)
->>>>>>> origin/try
     if not user or not user.password == form_data.password:  # No password hashing for testing
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -222,44 +166,21 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
     )
 
 
-
 ########---- faculty
 
 @router.post("/faculty/", tags=["admins"])
 async def create_faculty(
-        Fullname: str =  Query(...,description="Faculty Full Name"),
-        Acronym: str = Query(...,description="Faculty Acronym e,g: BIM,BBA"),
+        Fullname: str = Query(..., description="Faculty Full Name"),
+        Acronym: str = Query(..., description="Faculty Acronym e.g.: BIM, BBA"),
         db: Session = Depends(get_db),
-<<<<<<< HEAD
         current_user: UserRegister = Depends(admin_required)
 ):
-    # Check for duplicate faculty
-    existing_faculty = db.query(Faculty).filter(
-=======
-        current_user: models.UserRegister = Depends(admin_required)
-):
-    # Check for duplicate faculty
-    existing_faculty = db.query(models.Faculty).filter(
->>>>>>> origin/try
-        Faculty.Fullname == Fullname,
-        Faculty.Acronym == Acronym
-    ).first()
+    existing_faculty = db.query(Faculty).filter(Faculty.Fullname == Fullname, Faculty.Acronym == Acronym).first()
 
     if existing_faculty:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="faculty already exists ."
-        )
-<<<<<<< HEAD
-    new_faculty = Faculty(
-=======
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Faculty already exists.")
 
-
-    new_faculty = models.Faculty(
->>>>>>> origin/try
-        Fullname=Fullname,
-        Acronym=Acronym
-    )
+    new_faculty = Faculty(Fullname=Fullname, Acronym=Acronym)
     db.add(new_faculty)
     db.commit()
     db.refresh(new_faculty)
@@ -271,13 +192,13 @@ async def create_faculty(
 async def update_faculty(
         faculty_id: int,
         FullName: Optional[str] = Query(None, description="Faculty FullName"),
-        Acronym: Optional[str] = Query(None, description="Faculty Acronym E.g., BIM, BBA"),
+        Acronym: Optional[str] = Query(None, description="Faculty Acronym e.g., BIM, BBA"),
         current_user: UserRegister = Depends(admin_required),
         db: Session = Depends(get_db)
 ):
     faculty = db.query(Faculty).filter(Faculty.id == faculty_id).first()
 
-    if faculty is None:
+    if not faculty:
         raise HTTPException(status_code=404, detail="Faculty not found")
 
     if FullName:
@@ -291,94 +212,44 @@ async def update_faculty(
     return faculty
 
 
-@router.delete("/delete-faculty/{faculty_id}/", tags=["admins"], status_code=status.HTTP_200_OK)
+@router.delete("/delete-faculty/{faculty_id}/", tags=["admins"], status_code=status.HTTP_204_NO_CONTENT)
 async def delete_faculty(
         faculty_id: int,
-<<<<<<< HEAD
         current_user: UserRegister = Depends(admin_required),
         db: Session = Depends(get_db)
 ):
     faculty = db.query(Faculty).filter(Faculty.id == faculty_id).first()
-=======
-        current_user: models.UserRegister = Depends(admin_required),
-        db: Session = Depends(get_db)
-):
-    faculty = db.query(models.Faculty).filter(models.Faculty.id == faculty_id).first()
->>>>>>> origin/try
 
-    if faculty is None:
+    if not faculty:
         raise HTTPException(status_code=404, detail="Faculty not found")
 
     db.delete(faculty)
     db.commit()
-<<<<<<< HEAD
-    return None
-=======
 
-    return faculty
->>>>>>> origin/try
-
+    return None  # 204 No Content, no body
 
 
 ########----manage subject
 @router.post("/subjects/", status_code=status.HTTP_201_CREATED, tags=["admins"], response_model=SubjectBase)
-async def add_subject(name: str = Query(..., description="The subject name you want to add"),
-                      subject_code:Optional[str] = Query(None, description="The code of subject eg: It 200"),
-                      faculty_id:Optional[str] = Query(None, description="Faculty of the subject"),
-<<<<<<< HEAD
-                      current_user: UserRegister = Depends(admin_required),
-                      db: Session = Depends(get_db)):
-
-    # Check for duplicate subject
-    existing_subject = db.query(Subject).filter(
-=======
-                      current_user: models.UserRegister = Depends(admin_required),
-                      db: Session = Depends(get_db)):
-
-    # Check for duplicate subject
-    existing_subject = db.query(models.Subject).filter(
->>>>>>> origin/try
-        Subject.name == name,
-        Subject.subject_code == subject_code,
-        Subject.faculty_id == faculty_id
-    ).first()
+async def add_subject(
+        name: str = Query(..., description="The subject name you want to add"),
+        subject_code: Optional[str] = Query(None, description="The code of subject eg: IT 200"),
+        faculty_id: Optional[str] = Query(None, description="Faculty of the subject"),
+        current_user: UserRegister = Depends(admin_required),
+        db: Session = Depends(get_db)
+):
+    existing_subject = db.query(Subject).filter(Subject.name == name, Subject.subject_code == subject_code, Subject.faculty_id == faculty_id).first()
 
     if existing_subject:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="subject Already exist in faculty, can not add duplicate")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Subject already exists in faculty, cannot add duplicate.")
 
-<<<<<<< HEAD
-    db_subject = Subject(
-=======
-    db_subject = models.Subject(
->>>>>>> origin/try
-        name=name,
-        subject_code=subject_code,
-        faculty_id=faculty_id
-    )
+    db_subject = Subject(name=name, subject_code=subject_code, faculty_id=faculty_id)
     db.add(db_subject)
     db.commit()
     db.refresh(db_subject)
 
     return db_subject
 
-
-@router.get("/get-subjects/", status_code=status.HTTP_201_CREATED, tags=["admins"], response_model=FacultySchema)
-async def get_subject(
-        faculty_name: Optional[str] = Query(None, description="Name of faculty to get subject"),
-<<<<<<< HEAD
-        current_user: UserRegister = Depends(admin_required),
-=======
-        current_user: models.UserRegister = Depends(admin_required),
->>>>>>> origin/try
-        db: Session = Depends(get_db)
-):
-    if not faculty_name:
-        raise HTTPException(status_code=400, detail="Faculty name is required")
-<<<<<<< HEAD
-    faculty = db.query(Faculty).filter(Faculty.Fullname == faculty_name).first()
-    if not faculty:
-        raise HTTPException(status_code=404, detail="Faculty not found")
-    return faculty
 
 @router.put("/Update-subject/{subject_id}/", response_model=SubjectBase, status_code=status.HTTP_200_OK, tags=["admins"])
 async def update_subject(
@@ -387,43 +258,19 @@ async def update_subject(
         subject_code: Optional[str] = Query(None, description="The code of subject"),
         faculty_id: Optional[str] = Query(None, description="Faculty of the subject"),
         current_user: UserRegister = Depends(admin_required),
-=======
-
-    faculty = db.query(models.Faculty).filter(models.Faculty.Fullname == faculty_name).first()
-
-    if not faculty:
-        raise HTTPException(status_code=404, detail="Faculty not found")
-
-    return faculty
-
-@router.put("/subjects/{subject_id}/", status_code=status.HTTP_200_OK, tags=["admins"], response_model=SubjectBase)
-async def update_subject(
-        subject_id: int,
-        subject_update: SubjectUpdate,
-        current_user: models.UserRegister = Depends(admin_required),
->>>>>>> origin/try
         db: Session = Depends(get_db)
 ):
     subject = db.query(Subject).filter(Subject.id == subject_id).first()
 
-<<<<<<< HEAD
+    if not subject:
+        raise HTTPException(status_code=404, detail="Subject not found")
+
     if name:
         subject.name = name
     if subject_code:
         subject.subject_code = subject_code
     if faculty_id:
         subject.faculty_id = faculty_id
-=======
-    if not subject:
-        raise HTTPException(status_code=404, detail="Subject not found")
-
-    if subject_update.name is not None:
-        subject.name = subject_update.name
-    if subject_update.faculty_id is not None:
-        subject.faculty_id = subject_update.faculty_id
-    if subject_update.subject_code is not None:
-        subject.subject_code = subject_update.subject_code
->>>>>>> origin/try
 
     db.commit()
     db.refresh(subject)
@@ -432,13 +279,11 @@ async def update_subject(
 
 
 @router.delete("/subjects/{subject_id}/", status_code=status.HTTP_204_NO_CONTENT, tags=["admins"])
-async def delete_subject(subject_id: int,
-<<<<<<< HEAD
-                         current_user: UserRegister = Depends(admin_required),
-=======
-                         current_user: models.UserRegister = Depends(admin_required),
->>>>>>> origin/try
-                         db: Session = Depends(get_db)):
+async def delete_subject(
+        subject_id: int,
+        current_user: UserRegister = Depends(admin_required),
+        db: Session = Depends(get_db)
+):
     subject = db.query(Subject).filter(Subject.id == subject_id).first()
 
     if not subject:
@@ -446,11 +291,5 @@ async def delete_subject(subject_id: int,
 
     db.delete(subject)
     db.commit()
-<<<<<<< HEAD
-    return None
 
-    # return {"detail": "Subject deleted successfully"}
-=======
-
-    return {"detail": "Subject deleted successfully"}
->>>>>>> origin/try
+    return None  # 204 No Content should return no body
